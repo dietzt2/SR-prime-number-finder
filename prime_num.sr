@@ -1,0 +1,69 @@
+#prime_num.sr
+#written by: Tyler Dietz
+#class: CPSC 330
+#date: 2/23/2016
+resource prime_number ()
+
+  var p:int; var n:int
+  if getarg (1,p) > 0 ->
+    #write(p)
+  [] else ->
+    write("Error: must pass 2 valid args")
+    stop
+  fi
+
+  if getarg (2,n) > 2 ->
+    #write(n)
+  [] else ->
+    write("Error: must pass 2 valid args")
+    stop
+  fi
+
+  op bag(num:int)
+  op filled_bag(num:int)
+
+  process coordinator
+    fa i := 2 to n -> send bag(i) af
+
+    var count:int; count:= 2
+    var num:int
+    do count <= n ->
+      receive filled_bag(num)
+      if num > 0 ->
+        write (num)
+      fi
+      count +:= 1
+    od  
+
+    fa i:= 1 to p -> send bag(-1) af
+  end
+
+  process workers (i:=1 to p)
+    var prime:bool
+    var num:int
+    do true ->
+      receive bag(num)
+      if num < 0 -> exit
+      [] num = 2 -> send filled_bag(num);next
+      fi
+      prime:= true
+      var factor:int; factor := 2
+      do prime & factor <= floor(sqrt(num)) ->
+        # write("inside do")
+        if num % factor = 0 ->
+          prime := false
+        fi
+        factor +:= 1
+      od
+
+      if prime -> 
+        send filled_bag(num)
+      [] else ->
+        send filled_bag(-1) #identifying not prime
+      fi
+    od
+
+  end
+
+
+end prime_number
